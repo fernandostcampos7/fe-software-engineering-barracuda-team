@@ -21,24 +21,13 @@ import { Library } from './pages/Library';
 import { SpeciesPage } from './pages/Species';
 import { Messaging } from './pages/Messaging';
 import { SubscriptionManagement } from './pages/SubscriptionManagement';
+import { Programs } from './pages/Programs';
 
 const adminRoles: UserRole[] = ['super_admin', 'school_admin'];
 const teacherRoles: UserRole[] = ['super_admin', 'school_admin', 'teacher'];
-const studentRoles: UserRole[] = [
-	'super_admin',
-	'school_admin',
-	'teacher',
-	'student',
-];
+const studentRoles: UserRole[] = ['super_admin', 'school_admin', 'teacher', 'student'];
 const communityRoles: UserRole[] = ['super_admin', 'community_member'];
-const allRoles: UserRole[] = [
-	'super_admin',
-	'school_admin',
-	'teacher',
-	'student',
-	'community_member',
-	'public',
-];
+const allRoles: UserRole[] = ['super_admin', 'school_admin', 'teacher', 'student', 'community_member', 'public'];
 
 export function AppRoutes() {
 	return (
@@ -127,9 +116,7 @@ export function AppRoutes() {
 			<Route
 				path='/reports'
 				element={
-					<ProtectedRoute
-						allowedRoles={teacherRoles.concat(['community_member'])}
-					>
+					<ProtectedRoute allowedRoles={teacherRoles.concat(['community_member'])}>
 						<Reports />
 					</ProtectedRoute>
 				}
@@ -155,6 +142,16 @@ export function AppRoutes() {
 				element={
 					<ProtectedRoute allowedRoles={allRoles}>
 						<SubscriptionManagement />
+					</ProtectedRoute>
+				}
+			/>
+
+			{/* ✅ New Programs Route with Role Protection */}
+			<Route
+				path='/programs'
+				element={
+					<ProtectedRoute allowedRoles={[...adminRoles, ...teacherRoles, ...communityRoles, 'student']}>
+						<Programs />
 					</ProtectedRoute>
 				}
 			/>
