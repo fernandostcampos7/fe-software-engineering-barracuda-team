@@ -22,12 +22,29 @@ import { SpeciesPage } from './pages/Species';
 import { Messaging } from './pages/Messaging';
 import { SubscriptionManagement } from './pages/SubscriptionManagement';
 import { Programs } from './pages/Programs';
+import { SchoolPrograms } from './pages/SchoolPrograms';
+import { CommunityInitiatives } from './pages/CommunityInitiatives';
+import { Contact } from './pages/Contact';
+import { Privacy } from './pages/Privacy';
+import { Terms } from './pages/Terms';
 
 const adminRoles: UserRole[] = ['super_admin', 'school_admin'];
 const teacherRoles: UserRole[] = ['super_admin', 'school_admin', 'teacher'];
-const studentRoles: UserRole[] = ['super_admin', 'school_admin', 'teacher', 'student'];
+const studentRoles: UserRole[] = [
+	'super_admin',
+	'school_admin',
+	'teacher',
+	'student',
+];
 const communityRoles: UserRole[] = ['super_admin', 'community_member'];
-const allRoles: UserRole[] = ['super_admin', 'school_admin', 'teacher', 'student', 'community_member', 'public'];
+const allRoles: UserRole[] = [
+	'super_admin',
+	'school_admin',
+	'teacher',
+	'student',
+	'community_member',
+	'public',
+];
 
 export function AppRoutes() {
 	return (
@@ -39,6 +56,11 @@ export function AppRoutes() {
 			<Route path='/about' element={<About />} />
 			<Route path='/unauthorized' element={<Unauthorized />} />
 			<Route path='/species' element={<SpeciesPage />} />
+			<Route path='/programs/schools' element={<SchoolPrograms />} />
+			<Route path='/programs/community' element={<CommunityInitiatives />} />
+			<Route path='/contact' element={<Contact />} />
+			<Route path='/privacy' element={<Privacy />} />
+			<Route path='/terms' element={<Terms />} />
 
 			{/* Protected Routes */}
 			<Route
@@ -116,7 +138,9 @@ export function AppRoutes() {
 			<Route
 				path='/reports'
 				element={
-					<ProtectedRoute allowedRoles={teacherRoles.concat(['community_member'])}>
+					<ProtectedRoute
+						allowedRoles={teacherRoles.concat(['community_member'])}
+					>
 						<Reports />
 					</ProtectedRoute>
 				}
@@ -146,11 +170,17 @@ export function AppRoutes() {
 				}
 			/>
 
-			{/* ✅ New Programs Route with Role Protection */}
 			<Route
 				path='/programs'
 				element={
-					<ProtectedRoute allowedRoles={[...adminRoles, ...teacherRoles, ...communityRoles, 'student']}>
+					<ProtectedRoute
+						allowedRoles={[
+							...adminRoles,
+							...teacherRoles,
+							...communityRoles,
+							'student',
+						]}
+					>
 						<Programs />
 					</ProtectedRoute>
 				}

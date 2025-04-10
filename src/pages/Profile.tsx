@@ -1,45 +1,89 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 import {
 	UserCircle2,
 	Mail,
 	School,
-	Users,
 	MapPin,
 	Calendar,
 	Edit2,
 } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
+
+export interface Achievement {
+	id: number;
+	title: string;
+	description: string;
+}
+
+export interface User {
+	id: string;
+	email: string;
+	role: string;
+	firstName: string;
+	lastName: string;
+	schoolId?: string;
+	communityId?: string;
+	profileCompleted?: boolean;
+	bio?: string;
+	location?: string;
+	createdAt: string;
+	updatedAt: string;
+	achievements?: Achievement[];
+}
 
 export function Profile() {
-	// TODO: Fetch user data from Supabase
-	const user = {
-		firstName: 'John',
-		lastName: 'Doe',
-		email: 'john.doe@example.com',
-		role: 'teacher',
-		schoolId: 'SCH123',
-		location: 'Jakarta, Indonesia',
-		joinedDate: 'January 2024',
-		bio: 'Passionate educator focused on wildlife conservation and environmental education. Working to inspire the next generation of conservation leaders.',
-		achievements: [
-			{
-				id: 1,
-				title: 'Conservation Champion',
-				description: '10 species documented',
-			},
-			{
-				id: 2,
-				title: 'Community Leader',
-				description: '5 educational programs organized',
-			},
-			{ id: 3, title: 'Student Mentor', description: '20 students guided' },
-		],
-	};
+	const [user, setUser] = useState<User | null>(null);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		const fetchUser = async () => {
+			try {
+				const {
+					data: { session },
+				} = await supabase.auth.getSession();
+
+				const accessToken = session?.access_token;
+
+				if (!accessToken) {
+					console.error('❌ No access token found in Supabase session');
+					setLoading(false);
+					return;
+				}
+
+				const res = await axios.get<User>(
+					'http://localhost:5000/api/auth/profile',
+					{
+						headers: {
+							Authorization: `Bearer ${accessToken}`,
+						},
+					}
+				);
+
+				setUser(res.data);
+			} catch (error: any) {
+				console.error('❌ Error fetching user:', error.message || error);
+				if (error.response) {
+					console.error('📦 Server said:', error.response.data);
+				}
+			} finally {
+				setLoading(false);
+			}
+		};
+
+		fetchUser();
+	}, []);
+
+	if (loading) return <div className='p-8 text-center'>Loading profile...</div>;
+	if (!user)
+		return (
+			<div className='p-8 text-center text-red-600'>Error loading profile.</div>
+		);
 
 	return (
 		<div className='min-h-screen bg-gray-50 py-12'>
 			<div className='max-w-3xl mx-auto px-4 sm:px-6 lg:px-8'>
-				{/* Profile Header */}
 				<div className='bg-white rounded-lg shadow overflow-hidden'>
 					<div className='h-32 bg-emerald-600'></div>
 					<div className='relative px-6 pb-6'>
@@ -68,7 +112,6 @@ export function Profile() {
 					</div>
 				</div>
 
-				{/* Profile Details */}
 				<div className='mt-8 bg-white rounded-lg shadow overflow-hidden'>
 					<div className='px-6 py-6'>
 						<h2 className='text-lg font-semibold text-gray-900 mb-4'>
@@ -85,46 +128,55 @@ export function Profile() {
 									<span>School ID: {user.schoolId}</span>
 								</div>
 							)}
-							<div className='flex items-center text-gray-700'>
-								<MapPin className='h-5 w-5 mr-3 text-gray-400' />
-								<span>{user.location}</span>
-							</div>
+							{user.location && (
+								<div className='flex items-center text-gray-700'>
+									<MapPin className='h-5 w-5 mr-3 text-gray-400' />
+									<span>{user.location}</span>
+								</div>
+							)}
 							<div className='flex items-center text-gray-700'>
 								<Calendar className='h-5 w-5 mr-3 text-gray-400' />
-								<span>Joined {user.joinedDate}</span>
+								<span>
+									Joined {new Date(user.createdAt).toLocaleDateString()}
+								</span>
 							</div>
 						</div>
 
-						<div className='mt-6'>
-							<h3 className='text-md font-medium text-gray-900 mb-2'>About</h3>
-							<p className='text-gray-700'>{user.bio}</p>
-						</div>
+						{user.bio && (
+							<div className='mt-6'>
+								<h3 className='text-md font-medium text-gray-900 mb-2'>
+									About
+								</h3>
+								<p className='text-gray-700'>{user.bio}</p>
+							</div>
+						)}
 					</div>
 				</div>
 
-				{/* Achievements */}
-				<div className='mt-8 bg-white rounded-lg shadow overflow-hidden'>
-					<div className='px-6 py-6'>
-						<h2 className='text-lg font-semibold text-gray-900 mb-4'>
-							Achievements
-						</h2>
-						<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-							{user.achievements.map((achievement) => (
-								<div
-									key={achievement.id}
-									className='bg-emerald-50 p-4 rounded-lg border border-emerald-100'
-								>
-									<h3 className='font-medium text-emerald-800 mb-1'>
-										{achievement.title}
-									</h3>
-									<p className='text-sm text-emerald-600'>
-										{achievement.description}
-									</p>
-								</div>
-							))}
+				{user.achievements && user.achievements.length > 0 && (
+					<div className='mt-8 bg-white rounded-lg shadow overflow-hidden'>
+						<div className='px-6 py-6'>
+							<h2 className='text-lg font-semibold text-gray-900 mb-4'>
+								Achievements
+							</h2>
+							<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+								{user.achievements.map((achievement) => (
+									<div
+										key={achievement.id}
+										className='bg-emerald-50 p-4 rounded-lg border border-emerald-100'
+									>
+										<h3 className='font-medium text-emerald-800 mb-1'>
+											{achievement.title}
+										</h3>
+										<p className='text-sm text-emerald-600'>
+											{achievement.description}
+										</p>
+									</div>
+								))}
+							</div>
 						</div>
 					</div>
-				</div>
+				)}
 			</div>
 		</div>
 	);

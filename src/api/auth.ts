@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios';
-import { RegisterForm } from '../types/auth'; // Adjust the path to where RegisterForm is defined
+import { RegisterForm } from '../types/auth';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 

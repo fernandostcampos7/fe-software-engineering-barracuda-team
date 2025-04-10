@@ -57,7 +57,6 @@ export interface User {
 	bio?: string;
 	createdAt: string;
 	updatedAt: string;
-	// Added new fields
 	isPublicProfile?: boolean;
 	subscriptionStatus?: 'active' | 'inactive' | 'pending';
 	accessCode?: string;
