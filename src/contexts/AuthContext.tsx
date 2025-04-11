@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { User, UserRole } from '../types/auth';
 import { supabase } from '../lib/supabaseClient';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 interface AuthContextType {
 	user: User | null;
 	isLoading: boolean;
@@ -32,38 +34,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	useEffect(() => {
 		const checkSession = async () => {
 			setIsLoading(true);
+			const { data: sessionData } = await supabase.auth.getSession();
+			const accessToken = sessionData?.session?.access_token;
 
-			const { data: sessionData, error: sessionError } =
-				await supabase.auth.getSession();
+			if (accessToken) {
+				console.log('✅ Access token found:', accessToken);
+				try {
+					const res = await fetch(`${API_BASE_URL}/auth/profile`, {
+						method: 'GET',
+						headers: {
+							Authorization: `Bearer ${accessToken}`,
+							'Content-Type': 'application/json',
+						},
+					});
 
-			if (sessionData?.session) {
-				const { data: userData, error: userError } =
-					await supabase.auth.getUser();
-
-				if (userError || !userData?.user) {
-					console.error('❌ Failed to fetch user:', userError?.message);
+					if (!res.ok) throw new Error('Failed to fetch user profile');
+					const profile = await res.json();
+					console.log('✅ Fetched user profile:', profile);
+					setUser(profile);
+				} catch (err) {
+					console.error('❌ Error fetching user from backend:', err);
 					setUser(null);
-				} else {
-					const supaUser = userData.user;
-
-					const appUser = {
-						id: supaUser.id,
-						email: supaUser.email ?? '',
-						firstName: supaUser.user_metadata?.firstName ?? '',
-						lastName: supaUser.user_metadata?.lastName ?? '',
-						role: supaUser.user_metadata?.role ?? 'public',
-						createdAt: supaUser.created_at ?? '',
-						updatedAt: supaUser.updated_at ?? supaUser.created_at ?? '',
-					};
-
-					setUser(appUser);
-					console.log('✅ Restored session user:', appUser);
 				}
 			} else {
 				console.log('⚠️ No active session found');
 				setUser(null);
 			}
-
 			setIsLoading(false);
 		};
 
@@ -76,7 +72,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				email,
 				password,
 			});
-
 			if (error) throw error;
 
 			const { user } = data;
@@ -91,7 +86,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 					createdAt: user.created_at ?? '',
 					updatedAt: user.updated_at ?? user.created_at ?? '',
 				};
-
 				setUser(appUser);
 				console.log('✅ Setting user after login:', appUser);
 			}
@@ -104,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	};
 
 	const signUp = async (data: SignUpData) => {
-		const { email, password, firstName, lastName } = data; // Adjust fields to match your form.
+		const { email, password, firstName, lastName } = data;
 
 		try {
 			const { data: signUpData, error } = await supabase.auth.signUp({
@@ -112,24 +106,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				password,
 				options: {
 					data: {
-						// This is the "metadata" — optional but useful if you want to store extra info.
 						firstName,
 						lastName,
-						role: 'student', // You can add roles, etc., if needed.
+						role: 'student',
 					},
 				},
 			});
 
-			if (error) {
-				throw error;
-			}
+			if (error) throw error;
 
-			// Optionally log or handle signUpData if needed (usually contains user ID and other info)
 			console.log('User signed up:', signUpData);
-
 			navigate('/complete-profile');
 		} catch (error) {
-			console.error('Sign up error:', error);
+			console.error('❌ Sign up error:', error);
 			throw error;
 		}
 	};
@@ -140,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			setUser(null);
 			navigate('/');
 		} catch (error) {
-			console.error('Sign out error:', error);
+			console.error('❌ Sign out error:', error);
 			throw error;
 		}
 	};
@@ -150,9 +139,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			if (data.role === 'super_admin' || data.role === 'school_admin') {
 				throw new Error('Cannot upgrade to admin role');
 			}
-			// Add logic to update user profile (if you want to allow profile updates)
 		} catch (error) {
-			console.error('Profile update error:', error);
+			console.error('❌ Profile update error:', error);
 			throw error;
 		}
 	};
