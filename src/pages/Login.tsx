@@ -90,10 +90,10 @@ export function Login() {
 		try {
 			const { error } = await supabase.auth.signInWithOAuth({
 				provider,
-				options: {
-					redirectTo:
-						'https://fe-software-engineering-barracuda-team.vercel.app/complete-profile',
-				},
+				// options: {
+				// 	redirectTo:
+				// 		'https://fe-software-engineering-barracuda-team.vercel.app/complete-profile',
+				// },
 			});
 
 			if (error) {

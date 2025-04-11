@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
 export interface Achievement {
 	id: number;
 	title: string;
@@ -52,14 +54,11 @@ export function Profile() {
 					return;
 				}
 
-				const res = await axios.get<User>(
-					'http://localhost:5000/api/auth/profile',
-					{
-						headers: {
-							Authorization: `Bearer ${accessToken}`,
-						},
-					}
-				);
+				const res = await axios.get<User>(`${API_BASE_URL}/auth/profile`, {
+					headers: {
+						Authorization: `Bearer ${accessToken}`,
+					},
+				});
 
 				setUser(res.data);
 			} catch (error: any) {
@@ -141,7 +140,6 @@ export function Profile() {
 								</span>
 							</div>
 						</div>
-
 						{user.bio && (
 							<div className='mt-6'>
 								<h3 className='text-md font-medium text-gray-900 mb-2'>
@@ -160,17 +158,15 @@ export function Profile() {
 								Achievements
 							</h2>
 							<div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
-								{user.achievements.map((achievement) => (
+								{user.achievements.map((a) => (
 									<div
-										key={achievement.id}
+										key={a.id}
 										className='bg-emerald-50 p-4 rounded-lg border border-emerald-100'
 									>
 										<h3 className='font-medium text-emerald-800 mb-1'>
-											{achievement.title}
+											{a.title}
 										</h3>
-										<p className='text-sm text-emerald-600'>
-											{achievement.description}
-										</p>
+										<p className='text-sm text-emerald-600'>{a.description}</p>
 									</div>
 								))}
 							</div>
