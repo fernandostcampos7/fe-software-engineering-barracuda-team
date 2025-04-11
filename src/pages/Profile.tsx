@@ -57,6 +57,7 @@ export function Profile() {
 				const res = await axios.get<User>(`${API_BASE_URL}/auth/profile`, {
 					headers: {
 						Authorization: `Bearer ${accessToken}`,
+						'Content-Type': 'application/json', // ✅ important for some CORS setups or header parsers
 					},
 				});
 
