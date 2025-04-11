@@ -88,7 +88,13 @@ export function Login() {
 		provider: 'google' | 'github' | 'facebook' | 'slack'
 	) => {
 		try {
-			const { error } = await supabase.auth.signInWithOAuth({ provider });
+			const { error } = await supabase.auth.signInWithOAuth({
+				provider,
+				options: {
+					redirectTo:
+						'https://fe-software-engineering-barracuda-team.vercel.app/complete-profile',
+				},
+			});
 
 			if (error) {
 				throw error;

@@ -33,32 +33,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		const checkSession = async () => {
 			setIsLoading(true);
 
-			const { data } = await supabase.auth.getSession();
-			const accessToken = data?.session?.access_token;
+			const { data: sessionData, error: sessionError } =
+				await supabase.auth.getSession();
 
-			if (accessToken) {
-				console.log('Access token being sent:', accessToken); // ✅ Debug log
+			if (sessionData?.session) {
+				const { data: userData, error: userError } =
+					await supabase.auth.getUser();
 
-				try {
-					const response = await fetch('/api/auth/profile', {
-						method: 'GET',
-						headers: {
-							Authorization: `Bearer ${accessToken}`, // ✅ Send token
-							'Content-Type': 'application/json',
-						},
-					});
-
-					if (!response.ok) {
-						throw new Error('Failed to fetch user profile');
-					}
-
-					const profile = await response.json();
-					console.log('Fetched user profile:', profile); // ✅ Debug log
-					setUser(profile); // This user object should match your User type
-				} catch (error) {
-					console.error('Failed to fetch user profile:', error);
+				if (userError || !userData?.user) {
+					console.error('❌ Failed to fetch user:', userError?.message);
 					setUser(null);
+				} else {
+					const supaUser = userData.user;
+
+					const appUser = {
+						id: supaUser.id,
+						email: supaUser.email ?? '',
+						firstName: supaUser.user_metadata?.firstName ?? '',
+						lastName: supaUser.user_metadata?.lastName ?? '',
+						role: supaUser.user_metadata?.role ?? 'public',
+						createdAt: supaUser.created_at ?? '',
+						updatedAt: supaUser.updated_at ?? supaUser.created_at ?? '',
+					};
+
+					setUser(appUser);
+					console.log('✅ Restored session user:', appUser);
 				}
+			} else {
+				console.log('⚠️ No active session found');
+				setUser(null);
 			}
 
 			setIsLoading(false);
@@ -76,24 +79,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 			if (error) throw error;
 
-			// After successful sign-in, fetch the user profile
-			const accessToken = data?.session?.access_token;
-			if (accessToken) {
-				const response = await fetch('/api/auth/profile', {
-					method: 'GET',
-					headers: {
-						Authorization: `Bearer ${accessToken}`,
-					},
-				});
+			const { user } = data;
 
-				const profile = await response.json();
-				setUser(profile);
-				console.log('Setting user after login:', profile);
+			if (user) {
+				const appUser: User = {
+					id: user.id,
+					email: user.email ?? '',
+					firstName: user.user_metadata?.firstName ?? '',
+					lastName: user.user_metadata?.lastName ?? '',
+					role: user.user_metadata?.role ?? 'public',
+					createdAt: user.created_at ?? '',
+					updatedAt: user.updated_at ?? user.created_at ?? '',
+				};
+
+				setUser(appUser);
+				console.log('✅ Setting user after login:', appUser);
 			}
 
 			navigate('/dashboard');
 		} catch (error) {
-			console.error('Sign in error:', error);
+			console.error('❌ Sign in error:', error);
 			throw error;
 		}
 	};
@@ -167,7 +172,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			{children}
 		</AuthContext.Provider>
 	);
-
 }
 
 export function useAuth() {
